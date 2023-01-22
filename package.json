@@ -1,8 +1,8 @@
 {
 	"name": "svelte-http-client",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"author": "Fabrizio Giovinazzi (https://bibizio.github.io/cv/)",
-	"description": "http client returning svelte stores",
+	"description": "HTTP client returning svelte stores",
 	"license": "MIT",
 	"homepage": "https://bibizio.github.io/svelte-http-client/",
 	"repository": {
