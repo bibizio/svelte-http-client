@@ -1,80 +1,53 @@
 <script lang="ts">
 	import { SvelteHttpClient } from '$lib';
 
+	const client = new SvelteHttpClient('https://jsonplaceholder.typicode.com');
+
 	interface Post {
+		id?: number;
 		title: string;
 		body: string;
+		userId: number;
 	}
-	const client = new SvelteHttpClient();
-	let posts$ = client
-		.get$('https://jsonplaceholder.typicode.com/posts')
-		.then$((res) => res.json() as Promise<Post[]>)
-		.catch$((err) => {
-			console.log(err);
-			return [] as Post[];
-		})
-		.startWith$([] as Post[]);
 
-	let bla = 'bla';
-	function postApost() {
-		console.log('postApost');
-		client.post$(
-			'https://jsonplaceholder.typicode.com/posts',
-			{
-				title: 'foo',
-				body: 'bar',
-				userId: 1
-			},
-			{
-				headers: {
-					'Content-type': 'application/json; charset=UTF-8'
-				}
-			}
-		);
-		// .then$((res) => res.json())
-		// .then$((res: { title: string; body: string }) => {
-		//     bla = res.title
-		// })
-		// .finally$(() => console.log('ciao'));
-	}
-	function putApost() {
-		console.log('putApost');
-		client
-			.put$('https://jsonplaceholder.typicode.com/posts/1', {
-				id: 1,
-				title: 'foo',
-				body: 'bar',
-				userId: 1
+	function refreshPosts() {
+		return client
+			.getJson$<Post[]>('posts')
+			.catch$<Post[]>((err) => {
+				console.error(err);
+				return [];
 			})
-			.then$((res) => res.json())
-			.catch$(console.log)
-			.finally$(console.log);
+			.startWith$<Post[]>([]);
 	}
-	function patchApost() {
-		console.log('patchApost');
+
+	let loading = false;
+	let post: Post = {
+		title: '',
+		body: '',
+		userId: 1
+	};
+	let posts$ = refreshPosts();
+
+	function add() {
+		loading = true;
 		client
-			.patch$('https://jsonplaceholder.typicode.com/posts/1', {
-				title: 'foo'
+			.post$('posts', post)
+			.then$(() => {
+				posts$ = refreshPosts();
 			})
-			.then$((res) => res.json())
-			.catch$(console.log)
-			.finally$(console.log);
-	}
-	function deleteApost() {
-		console.log('deleteApost');
-		client
-			.delete$('https://jsonplaceholder.typicode.com/posts/1')
-			.then$((res) => res.json())
-			.catch$(console.log)
-			.finally$(console.log);
+			.catch$((err) => alert('error: ' + err.message))
+			.finally$(() => (loading = false));
 	}
 </script>
 
-<button on:click={postApost}>post</button>
-<button on:click={putApost}>put</button>
-<button on:click={patchApost}>patch</button>
-<button on:click={deleteApost}>delete</button>
-{bla}
+{#if loading}
+	<div class="overlay">loading</div>
+{/if}
+<label class="block" for="title"> Title</label>
+<input class="block" id="title" bind:value={post.title} />
+<label class="block" for="body"> Post</label>
+<textarea class="block" id="body" bind:value={post.body} />
+<button on:click={add}>post</button>
 <ul>
 	{#each $posts$ as { title, body }}
 		<li>
@@ -83,3 +56,22 @@
 		</li>
 	{/each}
 </ul>
+
+<style>
+	.overlay {
+		position: absolute;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100vw;
+		height: 100vh;
+		top: 0;
+		left: 0;
+		background-color: rgba(255, 255, 255, 0.8);
+	}
+
+	.block {
+		margin: 10px;
+		display: block;
+	}
+</style>
