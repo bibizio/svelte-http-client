@@ -12,7 +12,7 @@ You can install via _npm_
 
 ### fetch$
 
-The main method exported is `fetch$`, a wrapper for the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) that returns a custom svelte store that mimics the _Promise_ pattern.
+The main method exported is `fetch$`, a wrapper for the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) that returns a `Promisable`, a custom svelte store that mimics the _Promise_ pattern.
 On subscription, it unwraps the _Promise_ so it can be used like this:
 
 ```svelte
@@ -27,7 +27,7 @@ On subscription, it unwraps the _Promise_ so it can be used like this:
         .then$((res) => res.json())
         .catch$((err) => {
             console.error(err);
-            return 'default value;
+            return 'default value';
         });
 </script>
 
@@ -36,13 +36,13 @@ On subscription, it unwraps the _Promise_ so it can be used like this:
 
 ### HTTP verbs methods
 
-The library exports also methods for the main HTTP verbs and an utility method that extract the json body for each of them:
+The library exports also methods for the main HTTP verbs returning `Promisable` (ending with _$_) and _Promise_, each of them with a version that extract the json body:
 
-- `get$` and `getJson$`
-- `post$` and `postJson$`
-- `put$` and `putJson$`
-- `patch$` and `patchJson$`
-- `delete$` and `deleteJson$`
+- `get$`, `getJson$`, `get` and `getJson`
+- `post$`, `postJson$`, `post` and `postJson`
+- `put$`, `putJson$`, `put` and `putJson`
+- `patch$`, `patchJson$` ,`patch` and `patchJson`
+- `del$`, `delJson$`, `del` and `delJson`
 
 These methods are also designed to throw an `HttpError` if the fetch Response is not ok.
 
@@ -55,7 +55,7 @@ The previous example, using the verbs methods, can be written as:
     let value$ = getJson$('https://www.my.api/myendpoint')
         .catch$((err) => {
             console.error(err);
-            return 'default value;
+            return 'default value';
         });
 </script>
 
@@ -77,12 +77,12 @@ The library exports a class to create an api client with default base URL and `f
     let value$ = client.getJson$('myendpoint')
         .catch$((err) => {
             console.error(err);
-            return 'default value;
+            return 'default value';
         });
     let anotherValue$ = client.getJson$('myotherendpoint')
         .catch$((err) => {
             console.error(err);
-            return 'default value;
+            return 'default value';
         });
 </script>
 

@@ -56,41 +56,48 @@ export class HttpError extends Error {
 	}
 }
 
+async function fetchResponseHandler(response: Response): Promise<Response> {
+	if (response.ok) return response;
+
+	const { status, statusText, headers } = response;
+	const body = headers.get('content-type')?.includes('application/json')
+		? await response.json()
+		: await response.text();
+	throw new HttpError(status, statusText, body);
+}
+
+async function jsonUnwrapper<T>(response: Response): Promise<T> {
+	return response.json();
+}
+
 export function fetch$(
 	input: URL | RequestInfo,
 	init?: RequestInit
 ): Promisable<undefined, Response> {
 	return promisable(undefined, fetch(input, init));
 }
-function fetchErrorHandled$(
-	input: URL | RequestInfo,
-	init?: RequestInit
-): Promisable<undefined, Response> {
-	return fetch$(input, init).then$(async (response) => {
-		if (response.ok) return response;
-
-		const { status, statusText, headers } = response;
-		const body = headers.get('content-type')?.includes('application/json')
-			? await response.json()
-			: await response.text();
-		throw new HttpError(status, statusText, body);
-	});
-}
-function fetchJson$<T>(input: URL | RequestInfo, init?: RequestInit): Promisable<undefined, T> {
-	return fetchErrorHandled$(input, init).then$((response) => response.json() as T);
-}
 
 export function get$(
 	endpoint: string | URL,
 	init: RequestInit = {}
 ): Promisable<undefined, Response> {
-	return fetchErrorHandled$(endpoint, { ...init, method: 'GET' });
+	return fetch$(endpoint, { ...init, method: 'GET' }).then$(fetchResponseHandler);
 }
 export function getJson$<T>(
 	endpoint: string | URL,
 	init: RequestInit = {}
 ): Promisable<undefined, T> {
-	return fetchJson$<T>(endpoint, { ...init, method: 'GET' });
+	return fetch$(endpoint, { ...init, method: 'GET' })
+		.then$(fetchResponseHandler)
+		.then$<T>(jsonUnwrapper);
+}
+export function get(endpoint: string | URL, init: RequestInit = {}): Promise<Response> {
+	return fetch(endpoint, { ...init, method: 'GET' }).then(fetchResponseHandler);
+}
+export function getJson<T>(endpoint: string | URL, init: RequestInit = {}): Promise<T> {
+	return fetch(endpoint, { ...init, method: 'GET' })
+		.then(fetchResponseHandler)
+		.then<T>(jsonUnwrapper);
 }
 
 export function post$(
@@ -98,22 +105,48 @@ export function post$(
 	body: any = null,
 	init: RequestInit = {}
 ): Promisable<undefined, Response> {
-	return fetchErrorHandled$(endpoint, {
+	return fetch$(endpoint, {
 		...init,
 		method: 'POST',
 		body: JSON.stringify(body)
-	});
+	}).then$(fetchResponseHandler);
 }
 export function postJson$<T>(
 	endpoint: string | URL,
 	body: any = null,
 	init: RequestInit = {}
 ): Promisable<undefined, T> {
-	return fetchJson$<T>(endpoint, {
+	return fetch$(endpoint, {
 		...init,
 		method: 'POST',
 		body: JSON.stringify(body)
-	});
+	})
+		.then$(fetchResponseHandler)
+		.then$<T>(jsonUnwrapper);
+}
+export function post(
+	endpoint: string | URL,
+	body: any = null,
+	init: RequestInit = {}
+): Promise<Response> {
+	return fetch(endpoint, {
+		...init,
+		method: 'POST',
+		body: JSON.stringify(body)
+	}).then(fetchResponseHandler);
+}
+export function postJson<T>(
+	endpoint: string | URL,
+	body: any = null,
+	init: RequestInit = {}
+): Promise<T> {
+	return fetch(endpoint, {
+		...init,
+		method: 'POST',
+		body: JSON.stringify(body)
+	})
+		.then(fetchResponseHandler)
+		.then<T>(jsonUnwrapper);
 }
 
 export function put$(
@@ -121,22 +154,48 @@ export function put$(
 	body: any = null,
 	init: RequestInit = {}
 ): Promisable<undefined, Response> {
-	return fetchErrorHandled$(endpoint, {
+	return fetch$(endpoint, {
 		...init,
 		method: 'PUT',
 		body: JSON.stringify(body)
-	});
+	}).then$(fetchResponseHandler);
 }
 export function putJson$<T>(
 	endpoint: string | URL,
 	body: any = null,
 	init: RequestInit = {}
 ): Promisable<undefined, T> {
-	return fetchJson$<T>(endpoint, {
+	return fetch$(endpoint, {
 		...init,
 		method: 'PUT',
 		body: JSON.stringify(body)
-	});
+	})
+		.then$(fetchResponseHandler)
+		.then$<T>(jsonUnwrapper);
+}
+export function put(
+	endpoint: string | URL,
+	body: any = null,
+	init: RequestInit = {}
+): Promise<Response> {
+	return fetch(endpoint, {
+		...init,
+		method: 'PUT',
+		body: JSON.stringify(body)
+	}).then(fetchResponseHandler);
+}
+export function putJson<T>(
+	endpoint: string | URL,
+	body: any = null,
+	init: RequestInit = {}
+): Promise<T> {
+	return fetch(endpoint, {
+		...init,
+		method: 'PUT',
+		body: JSON.stringify(body)
+	})
+		.then(fetchResponseHandler)
+		.then<T>(jsonUnwrapper);
 }
 
 export function patch$(
@@ -144,35 +203,71 @@ export function patch$(
 	body: any = null,
 	init: RequestInit = {}
 ): Promisable<undefined, Response> {
-	return fetchErrorHandled$(endpoint, {
+	return fetch$(endpoint, {
 		...init,
 		method: 'PATCH',
 		body: JSON.stringify(body)
-	});
+	}).then$(fetchResponseHandler);
 }
 export function patchJson$<T>(
 	endpoint: string | URL,
 	body: any = null,
 	init: RequestInit = {}
 ): Promisable<undefined, T> {
-	return fetchJson$<T>(endpoint, {
+	return fetch$(endpoint, {
 		...init,
 		method: 'PATCH',
 		body: JSON.stringify(body)
-	});
+	})
+		.then$(fetchResponseHandler)
+		.then$<T>(jsonUnwrapper);
+}
+export function patch(
+	endpoint: string | URL,
+	body: any = null,
+	init: RequestInit = {}
+): Promise<Response> {
+	return fetch(endpoint, {
+		...init,
+		method: 'PATCH',
+		body: JSON.stringify(body)
+	}).then(fetchResponseHandler);
+}
+export function patchJson<T>(
+	endpoint: string | URL,
+	body: any = null,
+	init: RequestInit = {}
+): Promise<T> {
+	return fetch(endpoint, {
+		...init,
+		method: 'PATCH',
+		body: JSON.stringify(body)
+	})
+		.then(fetchResponseHandler)
+		.then<T>(jsonUnwrapper);
 }
 
-export function delete$(
+export function del$(
 	endpoint: string | URL,
 	init: RequestInit = {}
 ): Promisable<undefined, Response> {
-	return fetchErrorHandled$(endpoint, { ...init, method: 'DELETE' });
+	return fetch$(endpoint, { ...init, method: 'DELETE' }).then$(fetchResponseHandler);
 }
-export function deleteJson$<T>(
+export function delJson$<T>(
 	endpoint: string | URL,
 	init: RequestInit = {}
 ): Promisable<undefined, T> {
-	return fetchJson$<T>(endpoint, { ...init, method: 'DELETE' });
+	return fetch$(endpoint, { ...init, method: 'DELETE' })
+		.then$(fetchResponseHandler)
+		.then$<T>(jsonUnwrapper);
+}
+export function del(endpoint: string | URL, init: RequestInit = {}): Promise<Response> {
+	return fetch(endpoint, { ...init, method: 'DELETE' }).then(fetchResponseHandler);
+}
+export function delJson<T>(endpoint: string | URL, init: RequestInit = {}): Promise<T> {
+	return fetch(endpoint, { ...init, method: 'DELETE' })
+		.then(fetchResponseHandler)
+		.then<T>(jsonUnwrapper);
 }
 
 export class SvelteHttpClient {
@@ -184,18 +279,31 @@ export class SvelteHttpClient {
 		this._init = init;
 	}
 
-	fetch$(input: URL | RequestInfo, init: RequestInit = {}) {
+	fetch$(input: URL | RequestInfo, init: RequestInit = {}): Promisable<undefined, Response> {
 		const _input =
 			input instanceof Request
 				? new Request(this._baseUrl + input.url, input)
 				: new URL(input, this._baseUrl);
 		return fetch$(_input, { ...this._init, ...init });
 	}
+	fetch(input: URL | RequestInfo, init: RequestInit = {}): Promise<Response> {
+		const _input =
+			input instanceof Request
+				? new Request(this._baseUrl + input.url, input)
+				: new URL(input, this._baseUrl);
+		return fetch(_input, { ...this._init, ...init });
+	}
 	get$(endpoint: string | URL, init: RequestInit = {}): Promisable<undefined, Response> {
 		return get$(new URL(endpoint, this._baseUrl), { ...this._init, ...init });
 	}
 	getJson$<T>(endpoint: string | URL, init: RequestInit = {}): Promisable<undefined, T> {
 		return getJson$<T>(new URL(endpoint, this._baseUrl), { ...this._init, ...init });
+	}
+	get(endpoint: string | URL, init: RequestInit = {}): Promise<Response> {
+		return get(new URL(endpoint, this._baseUrl), { ...this._init, ...init });
+	}
+	getJson<T>(endpoint: string | URL, init: RequestInit = {}): Promise<T> {
+		return getJson<T>(new URL(endpoint, this._baseUrl), { ...this._init, ...init });
 	}
 	post$(
 		endpoint: string | URL,
@@ -211,6 +319,12 @@ export class SvelteHttpClient {
 	): Promisable<undefined, T> {
 		return postJson$<T>(new URL(endpoint, this._baseUrl), body, { ...this._init, ...init });
 	}
+	post(endpoint: string | URL, body: any = null, init: RequestInit = {}): Promise<Response> {
+		return post(new URL(endpoint, this._baseUrl), body, { ...this._init, ...init });
+	}
+	postJson<T>(endpoint: string | URL, body: any = null, init: RequestInit = {}): Promise<T> {
+		return postJson<T>(new URL(endpoint, this._baseUrl), body, { ...this._init, ...init });
+	}
 	put$(
 		endpoint: string | URL,
 		body: any = null,
@@ -224,6 +338,12 @@ export class SvelteHttpClient {
 		init: RequestInit = {}
 	): Promisable<undefined, T> {
 		return putJson$<T>(new URL(endpoint, this._baseUrl), body, { ...this._init, ...init });
+	}
+	put(endpoint: string | URL, body: any = null, init: RequestInit = {}): Promise<Response> {
+		return put(new URL(endpoint, this._baseUrl), body, { ...this._init, ...init });
+	}
+	putJson<T>(endpoint: string | URL, body: any = null, init: RequestInit = {}): Promise<T> {
+		return putJson<T>(new URL(endpoint, this._baseUrl), body, { ...this._init, ...init });
 	}
 	patch$(
 		endpoint: string | URL,
@@ -239,10 +359,22 @@ export class SvelteHttpClient {
 	): Promisable<undefined, T> {
 		return patchJson$<T>(new URL(endpoint, this._baseUrl), body, { ...this._init, ...init });
 	}
-	delete$(endpoint: string | URL, init: RequestInit = {}): Promisable<undefined, Response> {
-		return delete$(new URL(endpoint, this._baseUrl), { ...this._init, ...init });
+	patch(endpoint: string | URL, body: any = null, init: RequestInit = {}): Promise<Response> {
+		return patch(new URL(endpoint, this._baseUrl), body, { ...this._init, ...init });
 	}
-	deleteJson$<T>(endpoint: string | URL, init: RequestInit = {}): Promisable<undefined, T> {
-		return deleteJson$<T>(new URL(endpoint, this._baseUrl), { ...this._init, ...init });
+	patchJson<T>(endpoint: string | URL, body: any = null, init: RequestInit = {}): Promise<T> {
+		return patchJson<T>(new URL(endpoint, this._baseUrl), body, { ...this._init, ...init });
+	}
+	del$(endpoint: string | URL, init: RequestInit = {}): Promisable<undefined, Response> {
+		return del$(new URL(endpoint, this._baseUrl), { ...this._init, ...init });
+	}
+	delJson$<T>(endpoint: string | URL, init: RequestInit = {}): Promisable<undefined, T> {
+		return delJson$<T>(new URL(endpoint, this._baseUrl), { ...this._init, ...init });
+	}
+	del(endpoint: string | URL, init: RequestInit = {}): Promise<Response> {
+		return del(new URL(endpoint, this._baseUrl), { ...this._init, ...init });
+	}
+	delJson<T>(endpoint: string | URL, init: RequestInit = {}): Promise<T> {
+		return delJson<T>(new URL(endpoint, this._baseUrl), { ...this._init, ...init });
 	}
 }
